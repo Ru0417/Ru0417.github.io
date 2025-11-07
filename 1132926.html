@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1132926</title>
+  <style>
+    /* 全域設定 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', 'Noto Sans TC', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 導覽列 */
+    header {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 3rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      color: #222;
+      font-weight: 600;
+    }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 1.5rem;
+    }
+
+    nav a {
+      text-decoration: none;
+      color: #333;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    nav a:hover {
+      color: #0077ff;
+    }
+
+    /* 主內容 */
+    main {
+      margin-top: 100px;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 2rem;
+      animation: fadeIn 1.2s ease-in-out;
+    }
+
+    main h2 {
+      font-size: 2.8rem;
+      margin-bottom: 1rem;
+      color: #1f1f1f;
+    }
+
+    main p {
+      max-width: 600px;
+      font-size: 1.2rem;
+      color: #444;
+      line-height: 1.8;
+    }
+
+    .btn {
+      margin-top: 2rem;
+      padding: 0.8rem 2rem;
+      background: #0077ff;
+      color: white;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #005cd1;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    /* 頁尾 */
+    footer {
+      background: rgba(255, 255, 255, 0.3);
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      color: #333;
+    }
+
+    /* 動畫 */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+      header {
+        flex-direction: column;
+        padding: 1rem;
+      }
+
+      nav ul {
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 0.5rem;
+      }
+
+      main h2 {
+        font-size: 2.2rem;
+      }
+
+      main p {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>My Beautiful Web</h1>
+    <nav>
+      <ul>
+        <li><a href="#">首頁</a></li>
+        <li><a href="#">關於</a></li>
+        <li><a href="#">服務</a></li>
+        <li><a href="#">聯絡</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <h2>歡迎來到1132926的精美的網頁設計</h2>
+    <p>
+      這是一個無主題、但具備美觀與現代風格的展示頁面。
+      你可以自由修改色彩、文字與內容，打造屬於自己的風格！
+    </p>
+    <button class="btn">立即探索</button>
+  </main>
+
+  <footer>
+    &copy; 2025 Beautiful Web Design. All rights reserved.
+  </footer>
+
+</body>
+</html>
