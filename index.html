@@ -1,15 +1,371 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <title>Title</title>
-        <link rel="stylesheet" href="styles.css" />
-        <script src="script.js"></script>
-    </head>
-    <body>
-        <h1 class="title">Hello World</h1>
-        <div id="mainDiv">Hello Div</div>
-        <br />
-        <button onclick="buttonClicked()">Click me</button>
-    </body>
+<html lang="zh-TW">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>XO 井字棋 — 雙人對戰</title>
+    
+    <style>
+        :root {
+            /* 基礎配色：使用深藍色和紫色取代黑色 */
+            --bg: #14083a;      /* 深紫羅蘭色 (主背景) */
+            --text: #ffffff;    /* 純白色文字 */
+            
+            /* 棋子顏色和發光效果 (保持極鮮豔) */
+            --x: #ff073a;       /* 亮紅色 (Electric Red) */
+            --o: #00ffff;       /* 亮青色 (Cyan/Electric Blue) */
+            --win: #ffed00;     /* 勝利高亮色 (Neon Yellow) */
+
+            /* 按鈕和邊框顏色 */
+            --btn-bg: #2a125e;  /* 較淺的紫羅蘭按鈕背景 */
+            --board-dark: #1f0f4a; /* 棋盤背景的深紫藍色 */
+            --border-light: rgba(255, 255, 255, 0.2);
+            --shadow-dark: #00000060; /* 陰影仍需要一些深色來創造深度，但透明度較高 */
+        }
+
+        /* --- 全局設定 --- */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        html, body {
+            height: 100%;
+        }
+        body {
+            margin: 0;
+            font-family: 'Noto Sans TC', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: grid;
+            place-items: center;
+            padding: 24px;
+            /* 增加明顯的背景氛圍光 */
+            box-shadow: inset 0 0 150px rgba(0, 255, 255, 0.08); 
+        }
+
+        .container { 
+            width: min(720px, 96%); 
+            text-align: center; 
+        }
+        h1 { 
+            margin: 0 0 16px 0; 
+            font-size: 32px; 
+            font-weight: 900;
+            color: var(--o);
+            text-shadow: 0 0 10px var(--o), 0 0 20px rgba(0, 255, 255, 0.8);
+        }
+        .status { 
+            margin-bottom: 18px; 
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        #turn {
+            font-size: 1.3em;
+            font-weight: 900;
+            color: var(--win);
+            text-shadow: 0 0 5px var(--win);
+        }
+
+
+        /* --- 棋盤區 --- */
+        .board {
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px;
+            /* 背景使用 board-dark 變數 */
+            background: linear-gradient(145deg, #2a1563, var(--board-dark));
+            box-shadow: 
+                0 8px 15px var(--shadow-dark), 
+                0 0 50px rgba(0, 255, 255, 0.2); /* 棋盤周圍有光暈 */
+            padding: 15px; 
+            border-radius: 20px; 
+            width: min(560px, 92%); 
+            aspect-ratio: 1/1;
+            border: 2px solid var(--border-light);
+        }
+
+        /* --- 棋子格子樣式 --- */
+        .cell {
+            display: grid; 
+            place-items: center;
+            
+            border-radius: 12px; 
+            /* 格子使用更深的紫藍色，強調凹陷感 */
+            background: linear-gradient(145deg, #1b0f44, #12082e); 
+            border: 1px solid var(--border-light);
+            box-shadow: 
+                inset 3px 3px 6px var(--shadow-dark), /* 保持一點點陰影創造深度 */
+                inset -3px -3px 6px rgba(255, 255, 255, 0.05);
+
+            font-size: 72px; 
+            font-weight: 900;
+            
+            cursor: pointer; 
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent;
+            transition: all 0.2s ease;
+        }
+
+        .cell:hover:not(:disabled) {
+            transform: scale(0.98);
+            box-shadow: 
+                0 0 5px rgba(255, 255, 255, 0.3), /* 邊緣發光 */
+                inset 3px 3px 8px var(--shadow-dark), 
+                inset -3px -3px 8px rgba(255, 255, 255, 0.08);
+        }
+
+        /* --- 棋子顏色與極限霓虹發光 --- */
+        .cell.x { 
+            color: var(--x); 
+            text-shadow: 
+                0 0 10px var(--x), 
+                0 0 20px var(--x), 
+                0 0 30px rgba(255, 7, 58, 0.8); 
+        }
+        .cell.o { 
+            color: var(--o); 
+            text-shadow: 
+                0 0 10px var(--o), 
+                0 0 20px var(--o), 
+                0 0 30px rgba(0, 255, 255, 0.8); 
+        }
+
+        /* --- 勝利高亮 --- */
+        .cell.win { 
+            background: var(--win); 
+            /* 勝利後將文字轉為深紫色，確保高對比 */
+            color: #2a1563; 
+            text-shadow: none; 
+            box-shadow: 
+                0 0 20px var(--win),
+                0 0 40px rgba(255, 237, 0, 0.8);
+        }
+
+        /* --- 控制按鈕 --- */
+        .controls { 
+            margin-top: 30px; 
+        }
+        button { 
+            padding: 12px 20px; 
+            margin: 0 8px;
+            border-radius: 10px; 
+            border: 1px solid var(--o); 
+            background: var(--btn-bg); /* 按鈕背景 */
+            color: var(--text);
+            cursor: pointer;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.2); 
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+        }
+        button:hover {
+            background: #3a1a85; /* 滑過時變亮 */
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5); 
+        }
+        button:active {
+            transform: scale(0.95); 
+        }
+        button:disabled { 
+            opacity: 0.3; 
+            cursor: not-allowed; 
+            box-shadow: none;
+        }
+
+        /* --- 計分板 --- */
+        .scoreboard { 
+            margin-top: 30px; 
+            padding: 15px 25px;
+            text-align: left; 
+            display: inline-block; 
+            border: 1px solid var(--win); 
+            border-radius: 15px;
+            background: #2a1563; /* 使用非黑色深色背景 */
+            box-shadow: 0 0 10px rgba(255, 237, 0, 0.3); 
+        }
+        .scoreboard h2 { 
+            margin-bottom: 8px; 
+            font-size: 20px; 
+            font-weight: 800;
+            color: var(--win); 
+        }
+        .scoreboard p {
+            margin: 4px 0;
+            font-size: 16px;
+        }
+        #score-x { color: var(--x); font-weight: 700; text-shadow: 0 0 3px var(--x); }
+        #score-o { color: var(--o); font-weight: 700; text-shadow: 0 0 3px var(--o); }
+        #score-draw { color: var(--win); font-weight: 700; text-shadow: 0 0 3px var(--win); }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <h1>XO 井字棋</h1>
+
+        <div class="status">
+            <span>目前輪到：<strong id="turn">X</strong></span>
+            <span id="state"></span>
+        </div>
+
+        <section id="board" class="board" aria-label="井字棋棋盤">
+            <button class="cell" data-idx="0"></button>
+            <button class="cell" data-idx="1"></button>
+            <button class="cell" data-idx="2"></button>
+            <button class="cell" data-idx="3"></button>
+            <button class="cell" data-idx="4"></button>
+            <button class="cell" data-idx="5"></button>
+            <button class="cell" data-idx="6"></button>
+            <button class="cell" data-idx="7"></button>
+            <button class="cell" data-idx="8"></button>
+        </section>
+
+        <div class="scoreboard">
+            <h2>計分板</h2>
+            <p>X 勝場：<span id="score-x">0</span></p>
+            <p>O 勝場：<span id="score-o">0</span></p>
+            <p>平手次數：<span id="score-draw">0</span></p>
+        </div>
+
+        <div class="controls">
+            <button id="reset">重開一局</button>
+            <button id="reset-all">重置計分</button>
+        </div>
+    </main>
+
+    <script>
+        // 獲取 DOM 元素
+        const boardEl = document.getElementById('board');
+        const cells = Array.from(document.querySelectorAll('.cell'));
+        const btnReset = document.getElementById('reset');
+        const btnResetAll = document.getElementById('reset-all');
+        const turnEl = document.getElementById('turn');
+        const stateEl = document.getElementById('state');
+        const scoreXEl = document.getElementById('score-x');
+        const scoreOEl = document.getElementById('score-o');
+        const scoreDrawEl = document.getElementById('score-draw');
+
+        // 常數：定義所有可能的勝利連線
+        const WIN_LINES = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], // 橫排
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], // 直排
+            [0, 4, 8], [2, 4, 6]            // 斜線
+        ];
+
+        // 遊戲狀態變數
+        let board;    // 儲存 9 格的內容（'X', 'O', ''）
+        let current;  // 目前輪到誰下棋 ('X' 或 'O')
+        let active;   // 遊戲是否進行中 (boolean)
+        let scoreX = 0;
+        let scoreO = 0;
+        let scoreDraw = 0;
+
+        // --- 輔助函數 ---
+
+        // 初始化遊戲
+        function init() {
+            board = Array(9).fill('');
+            current = 'X';
+            active = true;
+
+            cells.forEach(c => {
+                c.textContent = '';
+                c.className = 'cell'; // 重設 class，移除 'X', 'O', 'win' 等
+                c.disabled = false;
+            });
+
+            turnEl.textContent = current;
+            stateEl.textContent = '';
+        }
+
+        // 更新計分板顯示
+        function updateScoreboard() {
+            scoreXEl.textContent = scoreX;
+            scoreOEl.textContent = scoreO;
+            scoreDrawEl.textContent = scoreDraw;
+        }
+
+        // 評估遊戲結果 (勝利/平手/未結束)
+        function evaluate() {
+            for (const line of WIN_LINES) {
+                const [a, b, c] = line;
+                // 檢查是否有連線且三個格子內容相同
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return { finished: true, winner: board[a], line };
+                }
+            }
+            // 檢查是否所有格子都滿了 (平手)
+            if (board.every(v => v)) return { finished: true, winner: null };
+            // 遊戲未結束
+            return { finished: false };
+        }
+
+        // 結束遊戲並更新分數
+        function endGame({ winner, line }) {
+            active = false;
+            if (winner) {
+                stateEl.textContent = `${winner} 勝利！`;
+                // 加上 'win' class 標記勝利連線
+                line.forEach(i => cells[i].classList.add('win'));
+                // 更新分數
+                if (winner === 'X') {
+                    scoreX++;
+                } else {
+                    scoreO++;
+                }
+            } else {
+                stateEl.textContent = '平手';
+                scoreDraw++;
+            }
+            
+            updateScoreboard();
+            cells.forEach(c => c.disabled = true);
+        }
+
+        // 切換玩家回合
+        function switchTurn() {
+            current = current === 'X' ? 'O' : 'X';
+            turnEl.textContent = current;
+        }
+
+        // 玩家下棋
+        function place(idx) {
+            // 檢查遊戲是否活躍，以及格子是否已被佔用
+            if (!active || board[idx]) return;
+
+            board[idx] = current;
+            const cell = cells[idx];
+            
+            cell.textContent = current;
+            cell.classList.add(current.toLowerCase()); // 加上 'x' 或 'o' class
+
+            const result = evaluate();
+
+            if (result.finished) {
+                endGame(result);
+            } else {
+                switchTurn();
+            }
+        }
+
+        // --- 事件監聽器 ---
+        cells.forEach(cell => {
+            cell.addEventListener('click', () => {
+                const idx = +cell.getAttribute('data-idx'); 
+                place(idx);
+            });
+        });
+
+        btnReset.addEventListener('click', init);
+
+        if (btnResetAll) {
+            btnResetAll.addEventListener('click', () => {
+                scoreX = scoreO = scoreDraw = 0;
+                updateScoreboard();
+                init();
+            });
+        }
+
+        init();
+        updateScoreboard();
+    </script>
+</body>
 </html>
